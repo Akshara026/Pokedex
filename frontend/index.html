@@ -8,14 +8,23 @@
 </head>
 <body class="h-1/2 lg:h-screen bg-gradient-to-br from-[#F3CFE9] to-[#8B47B5]  ">
     <!-- bg-gradient-to-b from-indigo-300 to-purple-500  -->
-
     <nav class="fixed top-0 w-full z-50 backdrop-blur-md shadow-md py-5 bg-white/30">
         <div class="container mx-auto flex items-center justify-between px-5">
             <div class="flex items-center gap-2">
                 <img class="w-8" src="logo.png" alt="logo">
                 <span class="text-2xl font-bold text-black">Pokédex</span>
             </div>
+    
+            <div class="relative"> 
+                <input id="pokemonSearch" type="text" placeholder="Search Pokémon..." 
+                class="p-2 border border-gray-300 rounded-md text-lg"
+                onkeyup="showSuggestions()" autocomplete="off">
+                <ul id="suggestions" class="absolute left-0 w-full bg-white border border-gray-300 rounded-md mt-1 shadow-md hidden"></ul>
+                <button onclick="searchPokemon()" class="bg-blue-500 text-white px-2 py-2 rounded-md ml-2">Search</button>
+            </div>
+            <div id="pokemonResult" class="mt-5 text-center"></div>
             
+    
             <ul class="hidden md:flex space-x-10 text-rose-600 font-medium text-base uppercase">
                 <li class="hover:text-violet-700 hover:bg-violet-200 px-3 py-1 rounded-md"><a href="#">home</a></li>
                 <li class="hover:text-violet-700 hover:bg-violet-200 px-3 py-1 rounded-md"><a href="#">search</a></li>
@@ -24,6 +33,7 @@
             </ul>
         </div>
     </nav>
+    
 
 
     <div class="relative mt-[80px]">
@@ -37,32 +47,30 @@
             </p> -->
             <!-- <div class="sticky top-[80px] z-50 bg-white/30 backdrop-blur-md shadow-md py-3"> -->
                 <div class="sticky top-[80px] z-50 bg-white/10 backdrop-blur-2xl shadow-md border border-white/20 py-3">
-                <ul class="flex flex-wrap justify-center space-x-4 text-rose-600 font-medium text-lg lowercase px-5">
-                    <li class="border-2 border-blue-200 text-slate-900 hover:text-blue-700 hover:bg-violet-200 hover:drop-shadow-[0_6px_12px_rgba(59,130,246,0.8)] px-3 py-1 rounded-md">
-                        <a href="#">water type</a>
-                    </li>
-                    <li class="border-2 border-yellow-200 text-slate-900 hover:text-yellow-500 hover:bg-yellow-200 hover:drop-shadow-[0_6px_12px_rgba(253,224,71,0.8)] px-3 py-1 rounded-md">
-                        <a href="#">electric type</a>
-                    </li>
-                    <li class="border-2 border-orange-200 text-slate-900 hover:text-orange-700 hover:bg-orange-200 hover:drop-shadow-[0_6px_12px_rgba(234,88,12,0.8)] px-3 py-1 rounded-md">
-                        <a href="#">fire type</a>
-                    </li>
-                    <li class="border-2 border-gray-200 text-slate-900 hover:text-gray-700 hover:bg-gray-200 hover:drop-shadow-[0_6px_12px_rgba(168,162,158,0.8)] px-3 py-1 rounded-md">
-                        <a href="#">rock type</a>
-                    </li>
-                    <li class="border-2 border-pink-200 text-slate-900 hover:text-pink-700 hover:bg-pink-200 hover:drop-shadow-[0_6px_12px_rgba(253,164,175,0.8)] px-3 py-1 rounded-md">
-                        <a href="#">fairy type</a>
-                    </li>
-                    <li class="border-2 border-purple-200 text-slate-900 hover:text-purple-700 hover:bg-purple-200 hover:drop-shadow-[0_6px_12px_rgba(168,162,158,0.8)] px-3 py-1 rounded-md">
-                        <a href="#">legendary type</a>
-                    </li>
-                    <li class="border-2 border-green-200 text-slate-900 hover:text-green-700 hover:bg-green-200 hover:drop-shadow-[0_10px_20px_rgba(134,239,172,1)] px-3 py-1 rounded-md">
-                        <a href="#">grass type</a>
-                    </li>
-                </ul>
-            </div>
-            
-
+                    <div class="flex flex-wrap justify-center space-x-4 text-rose-600 font-medium text-lg lowercase px-5">
+                        <button class="border-2 border-blue-200 text-slate-900 hover:text-blue-700 hover:bg-violet-200 hover:drop-shadow-[0_6px_12px_rgba(59,130,246,0.8)] px-3 py-1 rounded-md">
+                            Water Type
+                        </button>
+                        <button class="border-2 border-yellow-200 text-slate-900 hover:text-yellow-500 hover:bg-yellow-200 hover:drop-shadow-[0_6px_12px_rgba(253,224,71,0.8)] px-3 py-1 rounded-md">
+                            Electric Type
+                        </button>
+                        <button class="border-2 border-orange-200 text-slate-900 hover:text-orange-700 hover:bg-orange-200 hover:drop-shadow-[0_6px_12px_rgba(234,88,12,0.8)] px-3 py-1 rounded-md">
+                            Fire Type
+                        </button>
+                        <button class="border-2 border-gray-200 text-slate-900 hover:text-gray-700 hover:bg-gray-200 hover:drop-shadow-[0_6px_12px_rgba(168,162,158,0.8)] px-3 py-1 rounded-md">
+                            Rock Type
+                        </button>
+                        <button class="border-2 border-pink-200 text-slate-900 hover:text-pink-700 hover:bg-pink-200 hover:drop-shadow-[0_6px_12px_rgba(253,164,175,0.8)] px-3 py-1 rounded-md">
+                            Fairy Type
+                        </button>
+                        <button class="border-2 border-purple-200 text-slate-900 hover:text-purple-700 hover:bg-purple-200 hover:drop-shadow-[0_6px_12px_rgba(168,162,158,0.8)] px-3 py-1 rounded-md">
+                            Legendary Type
+                        </button>
+                        <button class="border-2 border-green-200 text-slate-900 hover:text-green-700 hover:bg-green-200 hover:drop-shadow-[0_10px_20px_rgba(134,239,172,1)] px-3 py-1 rounded-md">
+                            Grass Type
+                        </button>
+                    </div>
+                </div>
 
     <div class="relative p-10 shadow-xl z-40 pt-[80px]">
     
@@ -73,7 +81,7 @@
                     <img src="./src/gengar-removebg-preview.png" alt="Gengar" class="w-full h-52 object-contain">
                     <p class="text-slate-900 text-lg font-semibold mt-2">Gengar</p>
                 </div>
-                <div class="border-2 border-white/30 p-3 rounded-lg bg-white/30 backdrop-blur-md h-72 flex flex-col items-center justify-center hover:shadow-lg">
+                <div class="border-2 border-white/30 p-3 rounded-lg bg-white/30 backdrop-blur-md h-72 flex flex-col items-center justify-center hover:shadow-lg ">
                     <img src="./src/Kirlia.png" alt="Kirlia" class="w-full h-52 object-contain">
                     <p class="text-slate-900 text-lg font-semibold mt-2">Kirlia</p>
                 </div>
@@ -126,6 +134,7 @@
             
         </div>
     </div>
+    <script src="./index.js"></script>
 
 </body>
 </html>
