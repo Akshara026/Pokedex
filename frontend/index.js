@@ -1,5 +1,18 @@
+let allPokemon = []; // Store Pokémon names globally
+
+// Fetch Pokémon list once on page load
+async function loadPokemonList() {
+    try {
+        let response = await fetch("https://pokeapi.co/api/v2/pokemon?limit=1000");
+        let data = await response.json();
+        allPokemon = data.results.map(p => p.name);
+    } catch (error) {
+        console.error("Error fetching Pokémon list:", error);
+    }
+}
+
 // Function to show suggestions while typing
-async function showSuggestions() {
+function showSuggestions() {
     const input = document.getElementById("pokemonSearch").value.toLowerCase();
     const suggestionsBox = document.getElementById("suggestions");
 
@@ -9,31 +22,21 @@ async function showSuggestions() {
 
     if (input.length === 0) return;
 
-    try {
-        // Fetch Pokémon list from PokéAPI
-        let response = await fetch("https://pokeapi.co/api/v2/pokemon?limit=1000");
-        let data = await response.json();
-        let allPokemon = data.results.map(p => p.name);
+    // Filter Pokémon names based on input
+    const filtered = allPokemon.filter(name => name.startsWith(input)).slice(0, 5);
 
-        // Filter Pokémon names based on input
-        const filtered = allPokemon.filter(name => name.startsWith(input)).slice(0, 5);
-
-        if (filtered.length > 0) {
-            suggestionsBox.classList.remove("hidden");
-        }
-
-        // Display suggestions
-        filtered.forEach(name => {
-            const li = document.createElement("li");
-            li.textContent = name;
-            li.classList.add("px-3", "py-2", "cursor-pointer", "hover:bg-gray-200");
-            li.onclick = () => selectPokemon(name);
-            suggestionsBox.appendChild(li);
-        });
-
-    } catch (error) {
-        console.error("Error fetching Pokémon list:", error);
+    if (filtered.length > 0) {
+        suggestionsBox.classList.remove("hidden");
     }
+
+    // Display suggestions
+    filtered.forEach(name => {
+        const li = document.createElement("li");
+        li.textContent = name;
+        li.classList.add("px-3", "py-2", "cursor-pointer", "hover:bg-gray-200");
+        li.onclick = () => selectPokemon(name);
+        suggestionsBox.appendChild(li);
+    });
 }
 
 // Select Pokémon from suggestions
@@ -42,33 +45,41 @@ function selectPokemon(name) {
     document.getElementById("suggestions").innerHTML = "";
     document.getElementById("suggestions").classList.add("hidden");
 }
-
-// Function to search and display Pokémon details
-async function searchPokemon() {
+function searchPokemon() {
     const name = document.getElementById('pokemonSearch').value.trim().toLowerCase();
     if (!name) return alert("Enter a Pokémon name!");
 
-    try {
-        const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${name}`);
-        if (!res.ok) return alert("Pokémon not found!");
-
-        const data = await res.json();
-
-        document.getElementById('pokemonResult').innerHTML = `
-            <div class="border p-5 rounded-lg shadow-lg bg-white/30">
-                <img src="${data.sprites.front_default}" alt="${data.name}" class="mx-auto w-32">
-                <p class="text-xl font-semibold">${data.name.toUpperCase()}</p>
-                <p>Type: ${data.types.map(t => t.type.name).join(', ')}</p>
-                <p>HP: ${data.stats[0].base_stat}, Attack: ${data.stats[1].base_stat}</p>
-                <button onclick="addToFavorites('${data.name}', '${data.sprites.front_default}', '${data.stats[0].base_stat}', '${data.stats[1].base_stat}', '${data.stats[2].base_stat}', '${data.types.map(t => t.type.name)}')"
-                    class="mt-3 bg-green-500 text-white px-4 py-2 rounded-md">+ Add to Favorites</button>
-            </div>
-        `;
-
-    } catch (error) {
-        console.error("Error fetching Pokémon:", error);
-    }
+    // Redirect to pokemon.html with Pokémon name in query string
+    window.location.href = `pokemon.html?name=${encodeURIComponent(name)}`;
 }
+
+
+// // Function to search and display Pokémon details
+// async function searchPokemon() {
+//     const name = document.getElementById('pokemonSearch').value.trim().toLowerCase();
+//     if (!name) return alert("Enter a Pokémon name!");
+
+//     try {
+//         const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${name}`);
+//         if (!res.ok) return alert("Pokémon not found!");
+
+//         const data = await res.json();
+
+//         document.getElementById('pokemonResult').innerHTML = `
+//             <div class="border p-5 rounded-lg shadow-lg bg-white/30">
+//                 <img src="${data.sprites.front_default}" alt="${data.name}" class="mx-auto w-32">
+//                 <p class="text-xl font-semibold">${data.name.toUpperCase()}</p>
+//                 <p>Type: ${data.types.map(t => t.type.name).join(', ')}</p>
+//                 <p>HP: ${data.stats[0].base_stat}, Attack: ${data.stats[1].base_stat}</p>
+//                 <button onclick="addToFavorites('${data.name}', '${data.sprites.front_default}', '${data.stats[0].base_stat}', '${data.stats[1].base_stat}', '${data.stats[2].base_stat}', ${JSON.stringify(data.types.map(t => t.type.name))})"
+//                     class="mt-3 bg-green-500 text-white px-4 py-2 rounded-md">+ Add to Favorites</button>
+//             </div>
+//         `;
+
+//     } catch (error) {
+//         console.error("Error fetching Pokémon:", error);
+//     }
+// }
 
 // Function to add Pokémon to favorites (MongoDB)
 async function addToFavorites(name, image, hp, attack, defense, type) {
@@ -77,12 +88,12 @@ async function addToFavorites(name, image, hp, attack, defense, type) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                name: name,
-                type: type.split(","),  // Convert type string to array
-                hp: hp,
-                attack: attack,
-                defense: defense,
-                image: image
+                name,
+                type, // Type is already an array
+                hp,
+                attack,
+                defense,
+                image
             })
         });
 
@@ -127,8 +138,14 @@ async function removeFavorite(id) {
     }
 }
 
-// Call fetchFavorites() when the page loads
-document.addEventListener('DOMContentLoaded', fetchFavorites);
+// Load Pokémon list once when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    loadPokemonList();
+    fetchFavorites();
+});
 
 // Ensure search works when clicking the button
-document.getElementById("searchButton").addEventListener("click", searchPokemon);
+const searchButton = document.getElementById("searchButton");
+if (searchButton) {
+    searchButton.addEventListener("click", searchPokemon);
+}
