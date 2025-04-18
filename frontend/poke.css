@@ -1,11 +1,9 @@
-/* Make the Pokémon image bigger */
 #pokemonImage {
     width: 220px;
     height: 220px;
     object-fit: contain;
 }
 
-/* Glassy type badge */
 .type-badge {
     padding: 6px 12px;
     border-radius: 12px;
@@ -15,10 +13,19 @@
     box-shadow: 0px 0px 8px rgba(255, 255, 255, 0.7);
 }
 
-/* Glow effects for stats */
 .hp-glow, .attack-glow, .evolution-glow {
     font-size: 18px;
     font-weight: bold;
     text-shadow: 0px 0px 5px rgba(255, 255, 255, 0.7);
+}
+
+#pokemonCard {
+    width: 500px;
+    padding: 20px;
+}
+
+#pokemonImage {
+    width: 250px;
+    height: 250px;
 }
 

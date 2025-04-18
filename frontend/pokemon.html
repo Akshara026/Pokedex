@@ -10,28 +10,21 @@
 </head>
 <body class="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#F3CFE9] to-[#8B47B5] text-white font-sans">
 
-
     <div id="pokemonCard" class="bg-white/20 backdrop-blur-lg shadow-md p-6 rounded-xl w-[450px] text-center border border-white/30 transition-all duration-300">
-
-
         <div class="flex justify-center">
             <img id="pokemonImage" src="" alt="Pokemon" class="w-64 h-64 object-contain">
         </div>
-
 
         <p id="pokemonNumber" class="text-gray-300 text-sm mt-2"></p>
         <p id="pokemonName" class="text-2xl font-bold text-white"></p>
         <div id="pokemonTypes" class="flex justify-center gap-2 mt-2"></div>
 
-
         <div class="flex justify-between mt-6">
-
             <div class="text-left">
                 <p class="text-lg font-semibold text-gray-100">HP: <span id="pokemonHP" class="text-white"></span></p>
                 <p class="text-lg font-semibold text-gray-100">Attack: <span id="pokemonAttack" class="text-white"></span></p>
                 <p class="text-lg font-semibold text-gray-100">Evolution: <span id="pokemonEvolution" class="text-white"></span></p>
             </div>
-
 
             <div class="text-left">
                 <p class="text-lg font-semibold text-gray-100">Height: <span id="pokemonHeight" class="text-white"></span></p>
@@ -41,14 +34,16 @@
             </div>
         </div>
 
-
         <p class="text-lg font-semibold text-gray-100 mt-4">Weaknesses:</p>
         <div id="pokemonWeaknesses" class="flex flex-wrap justify-center gap-2 mt-2"></div>
 
-        <button id="addToFavorites" class="mt-6 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md transition">+ Add to Favorites</button>
+        <!-- Fixed Button ID -->
+        <button id="favoritesContainer" class="mt-6 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md transition">+ Add to Favorites</button>
 
-        <a href="index.html" class="block mt-4 text-gray-200 underline hover:text-white transition">Back to Search</a>
+        <a href="index.html" class="block mt-4 text-gray-200 underline hover:text-white transition">back to search</a>
     </div>
+    <a href="favorites.html" class="mt-4 pl-4 bg-purple-500 hover:bg-purple-200 text-white hover:text-slate-700 px-4 py-2 rounded-md transition">View Favorites</a>
+  
 
 </body>
 </html>

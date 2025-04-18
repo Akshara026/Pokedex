@@ -1,154 +1,112 @@
+document.addEventListener("DOMContentLoaded", () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const pokemonName = urlParams.get("name");
+    if (pokemonName) displayPokemonDetails(pokemonName);
+
+    // Add event listener to correct button
+    document.getElementById("favoritesContainer").addEventListener("click", addFavorite);
+});
+
 async function displayPokemonDetails(name) {
     try {
         const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${name.toLowerCase()}`);
+        console.log("helooo"+res);
         if (!res.ok) return alert("Pokémon not found!");
 
         const data = await res.json();
-
-        // Set Image and Name
+        const primaryType = data.types[0].type.name;
+        console.log("dataaa"+data);
         document.getElementById("pokemonImage").src = data.sprites.other["official-artwork"].front_default;
         document.getElementById("pokemonName").textContent = data.name.toUpperCase();
         document.getElementById("pokemonNumber").textContent = `#${data.id}`;
         document.getElementById("pokemonHP").textContent = data.stats[0].base_stat;
         document.getElementById("pokemonAttack").textContent = data.stats[1].base_stat;
-        document.getElementById("pokemonHeight").textContent = (data.height / 10) + " m";  // Convert decimeters to meters
-        document.getElementById("pokemonWeight").textContent = (data.weight / 10) + " kg";  // Convert hectograms to kg
+        document.getElementById("pokemonHeight").textContent = (data.height / 10) + " m";
+        document.getElementById("pokemonWeight").textContent = (data.weight / 10) + " kg";
 
-        // Type Badges
+        const pokemonCard = document.getElementById("pokemonCard");
+        pokemonCard.style.borderColor = getTypeColor(primaryType);
+        pokemonCard.style.boxShadow = `0px 0px 15px ${getTypeColor(primaryType)}`;
+
         const typesContainer = document.getElementById("pokemonTypes");
         typesContainer.innerHTML = "";
         data.types.forEach(t => {
             const typeSpan = document.createElement("span");
-            typeSpan.className = "type-badge";
-            typeSpan.textContent = t.type.name;
+            typeSpan.className = "type-badge px-3 py-1 rounded-full text-white font-semibold text-sm";
+            typeSpan.textContent = t.type.name.toUpperCase();
             typeSpan.style.backgroundColor = getTypeColor(t.type.name);
             typesContainer.appendChild(typeSpan);
         });
 
-        // Fetch Evolution Details
         fetchEvolution(data.id);
-
-        // Fetch Weaknesses from Type API
         fetchWeaknesses(data.types[0].type.url);
-
+        fetchAbilities(data.abilities);
+        
     } catch (error) {
         console.error("Error fetching Pokémon:", error);
     }
 }
 
-// Fetch Evolution Details
-async function fetchEvolution(pokemonId) {
+// Function to add Pokémon to favorites
+async function addFavorite() {
+    const pokemonName = document.getElementById("pokemonName").textContent;
+    const pokemonHP = document.getElementById("pokemonHP").textContent;
+    const pokemonAttack = document.getElementById("pokemonAttack").textContent;
+    const pokemonTypes = document.getElementById("pokemonTypes").querySelectorAll("span");
+    const primaryType = pokemonTypes.length > 0 ? pokemonTypes[0].textContent.toLowerCase() : "unknown"; // Get first type if available
+
+    let favorites = JSON.parse(localStorage.getItem("favorites")) || [];
+
+    // Check if Pokémon is already in localStorage
+    if (favorites.some(pokemon => pokemon.name === pokemonName)) {
+        alert(`${pokemonName} is already in favorites.`);
+        return;
+    }
+
+    // Create the actual Pokémon data object
+    const pokemonData = {
+        id: `${pokemonName.toLowerCase()}-${Date.now()}`, // Unique ID
+        name: pokemonName,
+        hp: parseInt(pokemonHP),  // Real HP value from the page
+        attack: parseInt(pokemonAttack),  // Real Attack value from the page
+        type: primaryType,  // Real Type value from the first type (you could also loop through for multiple types)
+    };
+
+    // Add to localStorage
+    favorites.push(pokemonData);
+    localStorage.setItem("favorites", JSON.stringify(favorites));
+
+    // Send only the new item to backend
     try {
-        const speciesRes = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${pokemonId}/`);
-        const speciesData = await speciesRes.json();
-        const evolutionRes = await fetch(speciesData.evolution_chain.url);
-        const evolutionData = await evolutionRes.json();
+        const response = await fetch("http://localhost:3000/add-favorite", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(pokemonData)
+        });
 
-        let evoChain = [];
-        let evoStage = evolutionData.chain;
+        const textResponse = await response.text(); // Get raw response
+        try {
+            const data = JSON.parse(textResponse);
+            console.log("Server Response:", data);
 
-        // Loop through evolution chain properly
-        do {
-            evoChain.push(evoStage.species.name);
-            evoStage = evoStage.evolves_to.length > 0 ? evoStage.evolves_to[0] : null;
-        } while (evoStage);
-
-        // Determine evolution text
-        const currentPokemon = speciesData.name.toLowerCase();
-        if (evoChain.length === 1) {
-            document.getElementById("pokemonEvolution").textContent = "No Evolution";
-        } else if (evoChain.includes(currentPokemon)) {
-            let index = evoChain.indexOf(currentPokemon);
-            if (index === 0) {
-                document.getElementById("pokemonEvolution").textContent = `Evolves to ${evoChain[1].toUpperCase()}`;
-            } else if (index === evoChain.length - 1) {
-                document.getElementById("pokemonEvolution").textContent = "No Further Evolution";
+            if (response.ok) {
+                alert(`${pokemonName} added to favorites and synced!`);
             } else {
-                document.getElementById("pokemonEvolution").textContent = `Evolves from ${evoChain[index - 1].toUpperCase()} → Evolves to ${evoChain[index + 1].toUpperCase()}`;
+                console.warn(`❌ Error adding ${pokemonName}:`, data.message);
             }
-        } else {
-            document.getElementById("pokemonEvolution").textContent = "No Evolution";
+        } catch (error) {
+            console.warn("Non-JSON Response:", textResponse);
         }
 
     } catch (error) {
-        console.error("Error fetching evolution:", error);
-        document.getElementById("pokemonEvolution").textContent = "Not Available";
-    }
-}
-async function displayPokemonDetails(name) {
-    try {
-        const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${name.toLowerCase()}`);
-        if (!res.ok) return alert("Pokémon not found!");
-
-        const data = await res.json();
-
-        // Set Image and Name
-        document.getElementById("pokemonImage").src = data.sprites.other["official-artwork"].front_default;
-        document.getElementById("pokemonName").textContent = data.name.toUpperCase();
-        document.getElementById("pokemonNumber").textContent = `#${data.id}`;
-        document.getElementById("pokemonHP").textContent = data.stats[0].base_stat;
-        document.getElementById("pokemonAttack").textContent = data.stats[1].base_stat;
-        document.getElementById("pokemonHeight").textContent = (data.height / 10) + " m";  // Convert to meters
-        document.getElementById("pokemonWeight").textContent = (data.weight / 10) + " kg";  // Convert to kg
-
-        // Type Badges
-        const typesContainer = document.getElementById("pokemonTypes");
-        typesContainer.innerHTML = "";
-        data.types.forEach(t => {
-            const typeSpan = document.createElement("span");
-            typeSpan.className = "type-badge";
-            typeSpan.textContent = t.type.name;
-            typeSpan.style.backgroundColor = getTypeColor(t.type.name);
-            typesContainer.appendChild(typeSpan);
-        });
-
-        // Fetch and display abilities
-        const abilitiesList = document.getElementById("pokemonAbilities");
-        abilitiesList.innerHTML = ""; // Clear previous content
-        data.abilities.forEach(a => {
-            const li = document.createElement("li");
-            li.textContent = a.ability.name.replace("-", " "); // Replace hyphens for readability
-            abilitiesList.appendChild(li);
-        });
-
-        // Fetch Evolution Details
-        fetchEvolution(data.id);
-
-        // Fetch Weaknesses from Type API
-        fetchWeaknesses(data.types[0].type.url);
-
-    } catch (error) {
-        console.error("Error fetching Pokémon:", error);
+        console.error(`❌ Failed to add ${pokemonName}:`, error);
     }
 }
 
 
 
-// Fetch Weaknesses
-async function fetchWeaknesses(typeUrl) {
-    try {
-        const typeRes = await fetch(typeUrl);
-        const typeData = await typeRes.json();
-        const weaknesses = typeData.damage_relations.double_damage_from.map(w => w.name);
 
-        const weaknessesContainer = document.getElementById("pokemonWeaknesses");
-        weaknessesContainer.innerHTML = "";
-        weaknesses.forEach(weakness => {
-            const badge = document.createElement("span");
-            badge.textContent = weakness;
-            badge.className = "px-3 py-1 rounded-full text-white text-sm font-semibold";
-            badge.style.backgroundColor = getTypeColor(weakness); // Match Type Colors
-            weaknessesContainer.appendChild(badge);
-        });
-
-    } catch (error) {
-        console.error("Error fetching weaknesses:", error);
-        document.getElementById("pokemonWeaknesses").textContent = "Not Available";
-    }
-}
-
-
-// Helper function for type colors
+// Helper function to get type colors
 function getTypeColor(type) {
     const colors = {
         grass: "#78C850", fire: "#F08030", water: "#6890F0",
@@ -160,10 +118,74 @@ function getTypeColor(type) {
     };
     return colors[type] || "#777";
 }
+// Function to fetch Pokémon weaknesses based on type
+async function fetchWeaknesses(typeUrl) {
+    try {
+        const res = await fetch(typeUrl);
+        if (!res.ok) throw new Error("Type data not found!");
 
-// Load Pokémon from URL
-document.addEventListener("DOMContentLoaded", () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const pokemonName = urlParams.get("name");
-    if (pokemonName) displayPokemonDetails(pokemonName);
-});
+        const data = await res.json();
+        const weaknesses = new Set();
+
+        // Extract weaknesses from damage_relations
+        data.damage_relations.double_damage_from.forEach(type => weaknesses.add(type.name));
+
+        // Display weaknesses
+        const weaknessesContainer = document.getElementById("pokemonWeaknesses");
+        weaknessesContainer.innerHTML = "";
+
+        if (weaknesses.size === 0) {
+            weaknessesContainer.textContent = "No Major Weaknesses";
+        } else {
+            weaknesses.forEach(type => {
+                const typeSpan = document.createElement("span");
+                typeSpan.className = "type-badge px-3 py-1 rounded-full text-white font-semibold text-sm";
+                typeSpan.textContent = type.toUpperCase();
+                typeSpan.style.backgroundColor = getTypeColor(type);
+                weaknessesContainer.appendChild(typeSpan);
+            });
+        }
+
+    } catch (error) {
+        console.error("Error fetching weaknesses:", error);
+        document.getElementById("pokemonWeaknesses").textContent = "Not Available";
+    }
+}
+
+async function fetchAbilities(abilities) {
+    const abilitiesContainer = document.getElementById("pokemonAbilities");
+    abilitiesContainer.innerHTML = ""; // Clear previous abilities
+
+    abilities.forEach(ability => {
+        const abilityItem = document.createElement("li");
+        abilityItem.className = "bg-gray-800 text-white px-3 py-1 rounded-full text-sm font-semibold";
+        abilityItem.textContent = ability.ability.name.toUpperCase();  // Display ability name
+        abilitiesContainer.appendChild(abilityItem);
+    });
+}
+
+
+
+// Function to fetch evolution data
+async function fetchEvolution(pokemonId) {
+    try {
+        const speciesRes = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${pokemonId}/`);
+        const speciesData = await speciesRes.json();
+        const evolutionRes = await fetch(speciesData.evolution_chain.url);
+        const evolutionData = await evolutionRes.json();
+
+        let evoChain = [];
+        let evoStage = evolutionData.chain;
+
+        do {
+            evoChain.push(evoStage.species.name);
+            evoStage = evoStage.evolves_to.length > 0 ? evoStage.evolves_to[0] : null;
+        } while (evoStage);
+
+        document.getElementById("pokemonEvolution").textContent = evoChain.length > 1 ? `Evolves to ${evoChain[1].toUpperCase()}` : "No Evolution";
+
+    } catch (error) {
+        console.error("Error fetching evolution:", error);
+        document.getElementById("pokemonEvolution").textContent = "Not Available";
+    }
+}
